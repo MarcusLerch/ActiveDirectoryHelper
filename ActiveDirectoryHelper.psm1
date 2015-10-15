@@ -202,3 +202,24 @@ function Connect-ADDomain {
         New-PSDrive -Name $DriveName -PSProvider ActiveDirectory -Root "" -Server $TargetServer -Credential $TargetCred -Scope Global
     }
 }
+
+function Get-TokenGroups{
+    [cmdletbinding()]
+    param(
+        [Parameter(Mandatory=$true)][String]$Username
+    )
+    Try{
+        $user = Get-ADUser -Identity $Username
+        $outputht = @{}
+        $Tokengrous = (Get-ADObject -Identity $user -Properties TokenGroups).Tokengroups
+        Write-Verbose ("Found {0} tokengroups" -f $Tokengrous.count)
+        foreach ($group in $Tokengrous){
+            $groupObject = Get-ADGroup -Identity $group
+            $outputht.Add($groupObject.Name,$groupObject.SID)
+        }
+        $outputht
+    }
+    catch{
+        Write-Output ("No such userobject found")
+    }
+} 
