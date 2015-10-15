@@ -210,16 +210,25 @@ function Get-TokenGroups{
     )
     Try{
         $user = Get-ADUser -Identity $Username
-        $outputht = @{}
-        $Tokengrous = (Get-ADObject -Identity $user -Properties TokenGroups).Tokengroups
-        Write-Verbose ("Found {0} tokengroups" -f $Tokengrous.count)
-        foreach ($group in $Tokengrous){
-            $groupObject = Get-ADGroup -Identity $group
-            $outputht.Add($groupObject.Name,$groupObject.SID)
-        }
-        $outputht
     }
     catch{
         Write-Output ("No such userobject found")
+    }
+    if($user){
+        $ht_Output = @{}
+        $Tokengrous = (Get-ADObject -Identity $user -Properties TokenGroups).Tokengroups
+        Write-Verbose ("Found {0} tokengroups" -f $Tokengrous.count)
+        foreach ($group in $Tokengrous){
+            Try{
+                $groupObject = Get-ADGroup -Identity $group
+                $ht_Output.Add($groupObject.SID,$groupObject.Name)
+                Write-Verbose ("Evaluated SID {0} to {1}" -f $groupObject.Name,$groupObject.SID)
+            }
+            catch{
+                Write-Verbose ("Could not evaluate SID {0}" -f $group)
+                $ht_Output.Add($group,"no object in domain")
+            }
+        }
+        $ht_Output
     }
 } 
